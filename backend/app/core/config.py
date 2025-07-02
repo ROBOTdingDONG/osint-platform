@@ -1,166 +1,137 @@
 """
-Configuration settings for the OSINT Platform
-Manages environment variables and application settings
+Application configuration settings
+Centralized configuration management using Pydantic Settings
 """
 
-import os
-from typing import List, Optional
-from pydantic_settings import BaseSettings
-from pydantic import field_validator
+from pydantic import BaseSettings, validator
+from typing import List, Union, Optional
+import secrets
+from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    """Application settings and configuration"""
+    """
+    Application settings with environment variable support
+    All settings can be overridden via environment variables
+    """
     
-    # Application Settings
-    APP_NAME: str = "OSINT Platform"
+    # Application
+    APP_NAME: str = "OSINT Platform API"
     APP_VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
-    LOG_LEVEL: str = "INFO"
-    
-    # API Settings
     API_URL: str = "http://localhost:8000"
-    FRONTEND_URL: str = "http://localhost:3000"
-    
-    # Security Settings
-    JWT_SECRET: str = "your-super-secret-jwt-key"
-    JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_HOURS: int = 24
-    ENCRYPTION_KEY: Optional[str] = None
-    
-    # Database Settings
-    MONGODB_URL: str = "mongodb://admin:password@localhost:27017/osint_platform?authSource=admin"
-    MONGODB_DATABASE: str = "osint_platform"
-    
-    # Redis Settings
-    REDIS_URL: str = "redis://localhost:6379/0"
-    
-    # External API Keys
-    OPENAI_API_KEY: Optional[str] = None
-    TWITTER_API_KEY: Optional[str] = None
-    NEWS_API_KEY: Optional[str] = None
-    GOOGLE_API_KEY: Optional[str] = None
-    
-    # Email Settings
-    SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
-    SMTP_USERNAME: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAIL_FROM: str = "noreply@osintplatform.com"
-    
-    # CORS Settings
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8080"
-    ]
     
     # Security
-    ALLOWED_HOSTS: List[str] = ["*"]
+    SECRET_KEY: str = secrets.token_urlsafe(32)
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 hour
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30    # 30 days
+    PASSWORD_MIN_LENGTH: int = 8
+    
+    # CORS
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://localhost:3000",
+        "https://app.osintplatform.com",
+        "https://staging.osintplatform.com"
+    ]
+    
+    # Trusted Hosts
+    ALLOWED_HOSTS: List[str] = [
+        "localhost",
+        "127.0.0.1",
+        "0.0.0.0",
+        "api.osintplatform.com",
+        "staging-api.osintplatform.com"
+    ]
+    
+    # Database
+    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_DATABASE: str = "osint_platform"
+    MONGODB_TEST_DATABASE: str = "osint_platform_test"
+    
+    # Redis
+    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_PASSWORD: Optional[str] = None
+    REDIS_DB: int = 0
+    REDIS_MAX_CONNECTIONS: int = 10
+    
+    # InfluxDB
+    INFLUXDB_URL: str = "http://localhost:8086"
+    INFLUXDB_TOKEN: Optional[str] = None
+    INFLUXDB_ORG: str = "osint-platform"
+    INFLUXDB_BUCKET: str = "metrics"
+    
+    # Email
+    SMTP_HOST: str = "smtp.sendgrid.net"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = "apikey"
+    SMTP_PASSWORD: Optional[str] = None
+    EMAIL_FROM: str = "noreply@osintplatform.com"
+    EMAIL_FROM_NAME: str = "OSINT Platform"
+    
+    # External APIs
+    OPENAI_API_KEY: Optional[str] = None
+    TWITTER_BEARER_TOKEN: Optional[str] = None
+    NEWS_API_KEY: Optional[str] = None
+    ALPHA_VANTAGE_API_KEY: Optional[str] = None
     
     # Rate Limiting
-    RATE_LIMIT_REQUESTS_PER_MINUTE: int = 100
-    RATE_LIMIT_BURST: int = 10
+    RATE_LIMIT_PER_MINUTE: int = 60
+    RATE_LIMIT_PER_HOUR: int = 1000
     
-    # AWS Settings
-    AWS_ACCESS_KEY_ID: Optional[str] = None
-    AWS_SECRET_ACCESS_KEY: Optional[str] = None
-    AWS_REGION: str = "us-east-1"
-    AWS_S3_BUCKET: Optional[str] = None
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "json"
+    
+    # File Upload
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_TYPES: List[str] = [
+        ".pdf", ".doc", ".docx", ".txt", ".csv", ".xlsx", ".json"
+    ]
     
     # Monitoring
     SENTRY_DSN: Optional[str] = None
+    PROMETHEUS_METRICS: bool = True
     
-    @field_validator('CORS_ORIGINS', mode='before')
-    @classmethod
-    def validate_cors_origins(cls, v):
-        """Validate and parse CORS origins"""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(',')]
-        return v
+    # Feature Flags
+    ENABLE_MFA: bool = True
+    ENABLE_SOCIAL_LOGIN: bool = True
+    ENABLE_API_KEYS: bool = True
+    ENABLE_WEBHOOKS: bool = True
     
-    @field_validator('ALLOWED_HOSTS', mode='before')
-    @classmethod
-    def validate_allowed_hosts(cls, v):
-        """Validate and parse allowed hosts"""
-        if isinstance(v, str):
-            return [host.strip() for host in v.split(',')]
-        return v
+    @validator("CORS_ORIGINS", pre=True)
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
+    
+    @validator("ALLOWED_HOSTS", pre=True)
+    def assemble_allowed_hosts(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
     
     class Config:
         env_file = ".env"
+        env_file_encoding = "utf-8"
         case_sensitive = True
 
 
-# Create global settings instance
-settings = Settings()
-
-
-# Configuration validation
-def validate_config():
-    """Validate critical configuration settings"""
-    errors = []
-    
-    # Check required API keys for production
-    if settings.ENVIRONMENT == "production":
-        if not settings.OPENAI_API_KEY:
-            errors.append("OPENAI_API_KEY is required for production")
-        
-        if not settings.JWT_SECRET or settings.JWT_SECRET == "your-super-secret-jwt-key":
-            errors.append("JWT_SECRET must be set to a secure value in production")
-        
-        if not settings.ENCRYPTION_KEY:
-            errors.append("ENCRYPTION_KEY is required for production")
-    
-    # Check database configuration
-    if not settings.MONGODB_URL:
-        errors.append("MONGODB_URL is required")
-    
-    if errors:
-        raise ValueError(f"Configuration validation failed:\n" + "\n".join(f"- {error}" for error in errors))
-    
-    return True
-
-
-# Environment-specific configurations
-class DevelopmentConfig(Settings):
-    """Development environment configuration"""
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
-    LOG_LEVEL: str = "DEBUG"
-
-
-class ProductionConfig(Settings):
-    """Production environment configuration"""
-    ENVIRONMENT: str = "production"
-    DEBUG: bool = False
-    LOG_LEVEL: str = "WARNING"
-    ALLOWED_HOSTS: List[str] = ["osintplatform.com", "api.osintplatform.com"]
-
-
-class TestingConfig(Settings):
-    """Testing environment configuration"""
-    ENVIRONMENT: str = "testing"
-    DEBUG: bool = True
-    LOG_LEVEL: str = "DEBUG"
-    MONGODB_DATABASE: str = "osint_platform_test"
-
-
+@lru_cache()
 def get_settings() -> Settings:
-    """Get settings based on environment"""
-    env = os.getenv("ENVIRONMENT", "development").lower()
-    
-    if env == "production":
-        return ProductionConfig()
-    elif env == "testing":
-        return TestingConfig()
-    else:
-        return DevelopmentConfig()
+    """
+    Get cached settings instance
+    Using lru_cache to avoid reading .env file multiple times
+    """
+    return Settings()
 
 
-# Export settings instance
+# Global settings instance
 settings = get_settings()
-
-# Validate configuration on import
-validate_config()
