@@ -1,0 +1,142 @@
+version: 2
+updates:
+  # Python dependencies (Backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "backend"
+
+  # Node.js dependencies (Frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "frontend"
+
+  # Data Pipeline dependencies
+  - package-ecosystem: "pip"
+    directory: "/data-pipeline"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "python"
+      - "data-pipeline"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Backend Docker
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:30"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "backend"
+
+  # Frontend Docker
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "07:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "frontend"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+    reviewers:
+      - "ROBOTdingDONG"
+    assignees:
+      - "ROBOTdingDONG"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"
